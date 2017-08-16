@@ -17,7 +17,7 @@ def lets_create_network_from_file(f1):
 def compute_module_diameter(G,disease_list,disease_id):
     number_of_genes = int(disease_list[disease_id][1])
     average_shortest_path = 0.0
-    
+
     for i in range(0,number_of_genes -1):
 
         node_id1 = int(disease_list[disease_id][i+4])
@@ -27,7 +27,7 @@ def compute_module_diameter(G,disease_list,disease_id):
 
             print(i,j,node_id1,node_id2)
             average_shortest_path = average_shortest_path + nx.shortest_path_length(G,node_id1,node_id2)
-          
+
 
     average_shortest_path = average_shortest_path/float(number_of_genes)
     return average_shortest_path
@@ -41,7 +41,7 @@ def compute_module_diameter(G,disease_list,disease_id):
 
 
 # lets define our file path
-f1 = open("/home/cdparks/Desktop/Data/paper_reproduce/network_based_in_silico_reproduce/load_interactome.edgelist", "rb")
+f1 = open("DataS1_interactome_clean", "rb")
 G  = lets_create_network_from_file(f1)
 nx.write_edgelist(G,'check_edges.edgelist')
 f1.close()
@@ -70,5 +70,3 @@ avr  = np.zeros(nod)
 for i in range(0,nod):
     avr[i] = compute_module_diameter(G,disease_list,i)
     print(avr[i])
-
-
