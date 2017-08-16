@@ -41,7 +41,7 @@ def compute_module_diameter(G,disease_list,disease_id):
 
 
 # lets define our file path
-f1 = open("DataS1_interactome_clean", "rb")
+f1 = open("DataS1_interactome_clean.tsv", "rb")
 G  = lets_create_network_from_file(f1)
 nx.write_edgelist(G,'check_edges.edgelist')
 f1.close()
