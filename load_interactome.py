@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 
 
+
 ### this functions takes in file path (list of edges, notes) and creates a networkX graph
 ### returns graph G
 def lets_create_network_from_file(f1):
