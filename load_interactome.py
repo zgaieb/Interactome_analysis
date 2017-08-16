@@ -6,7 +6,7 @@ import numpy as np
 ### returns graph G
 def lets_create_network_from_file(f1):
     G = nx.read_edgelist(f1, nodetype= int, data=(('method:',str),))
-    nx.write_edgelist(G,'check.edgelist')
+    nx.write_edgelist(G,'edgelist_attributes.edgelist')
     return G
 
 
@@ -44,7 +44,6 @@ def compute_module_diameter(G,disease_list,disease_id):
 # lets define our file path
 f1 = open("DataS1_interactome_clean.tsv", "rb")
 G  = lets_create_network_from_file(f1)
-nx.write_edgelist(G,'check_edges.edgelist')
 f1.close()
 
 
@@ -66,7 +65,7 @@ for line in f2.readlines()[1:]:
 print(disease_list[0])
 
 nod  = len(disease_list)
-avr  = np.zeros(nod)
+avr  = np.zeros((nod,1))
 
 for i in range(0,nod):
     avr[i] = compute_module_diameter(G,disease_list,i)
