@@ -52,7 +52,7 @@ G  = lets_create_network_from_file(f1)
 f1.close()
 
 
-# assign each node its associated diseases
+# generating a list of genes for each disease
 disease_info_file = 'DataS2_disease_genes.tsv'
 f2 = open(disease_info_file,"r")
 
@@ -75,3 +75,12 @@ for i in range(0,nod):
     print('#########################################')
     print("lets get the run down on disease:",disease_list[i][0], avr[i])
     print(' ')
+
+
+########### Adding node attributes to each gene
+# Reading Drug Bank drug targets; format: DrugBank ID, Name, Type, Uniprot ID, Uniprot Name
+drugBank_file = np.genfromtxt("DrugBank_Uniprot_Data/drugbank_all_target_uniprot_links.txt",delimiter="\t",dtype=None)
+
+
+
+#
