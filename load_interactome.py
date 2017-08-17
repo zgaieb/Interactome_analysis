@@ -16,23 +16,26 @@ def lets_create_network_from_file(f1):
 ### loops over all nodes in disease list[id] and computers shortest path between pairs of nodes
 ### returns module average shortest path between all node pairs
 def compute_module_diameter(G,disease_list,disease_id):
+    print ("Disease name: ",disease_list[disease_id][0])
     number_of_genes = int(disease_list[disease_id][1])
     average_shortest_path = 0.0
-    counter = 0
+    counter_allnodes = 0
+    counter_remainingnodes = 0
     for i in range(0,number_of_genes -1):
         node_id1 = int(disease_list[disease_id][i+4])
-        print (node_id1)
         for j in range(i+1,number_of_genes):
+            counter_allnodes += 1
             node_id2 = int(disease_list[disease_id][j+4])
             if (node_id1 not in nx.nodes(G)) | (node_id2 not in nx.nodes(G)):
-                print (node_id1,node_id2)
-                next
-            print(i,j,node_id1,node_id2)
-            counter += 1
+                print ("skipping non existing nodes ",node_id1,node_id2)
+                continue
+            #print(i,j,node_id1,node_id2)
+            counter_remainingnodes += 1
             average_shortest_path = average_shortest_path + nx.shortest_path_length(G,node_id1,node_id2)
 
-
-    average_shortest_path = average_shortest_path/float(counter)
+    print (counter_remainingnodes)
+    print (counter_allnodes)
+    average_shortest_path = average_shortest_path/float(counter_remainingnodes)
     return average_shortest_path
 
 
