@@ -1,6 +1,16 @@
 import networkx as nx
 import numpy as np
+import matplotlib.pyplot as plt
+import sys
 
+
+###
+def lets_plot(graph):
+    nx.draw(graph)
+    plt.show()
+
+def debug():
+    sys.exit("debug mode")
 
 
 ### this functions takes in file path (list of edges, notes) and creates a networkX graph
@@ -11,31 +21,61 @@ def lets_create_network_from_file(f1):
     return G
 
 
+### this function takes in connected graph G, disease list, and disease id
+### loops over all nodes in disease list[id] and computers shortest path between pairs of nodes
+### returns module average shortest path between all node pairs
+### module size correspons to number of nodes in largest connected subgraph
+def compute_module_diameter(G,disease_list,disease_id):
+
+    number_of_genes = int(disease_list[disease_id][1])
+
+    list_of_nodes = []
+    for i in range(0,number_of_genes):
+        node_id1 = int(disease_list[disease_id][i+4])
+
+        if (node_id1  in nx.nodes(G)):
+            list_of_nodes.append(node_id1)
+
+    sub = nx.subgraph(G,list_of_nodes)
+
+    connected  = max(nx.connected_component_subgraphs(sub), key = len)
+    dist = connected.number_of_nodes()
+    
+    return dist
+
 
 ### this function takes in connected graph G, disease list, and disease id
 ### loops over all nodes in disease list[id] and computers shortest path between pairs of nodes
 ### returns module average shortest path between all node pairs
-def compute_module_diameter(G,disease_list,disease_id):
+def compute_shortest_path_length(G,disease_list,disease_id):
     number_of_genes = int(disease_list[disease_id][1])
     average_shortest_path = 0.0
-    counter_allnodes = 0
-    counter_remainingnodes = 0
-    for i in range(0,number_of_genes -1):
+    genes_in_interactome = 0
+
+    for i in range(0,number_of_genes):
         node_id1 = int(disease_list[disease_id][i+4])
-        for j in range(i+1,number_of_genes):
-            counter_allnodes += 1
-            node_id2 = int(disease_list[disease_id][j+4])
 
-            if (node_id1 not in nx.nodes(G)) | (node_id2 not in nx.nodes(G)):
-                continue
 
-            if(nx.has_path(G,node_id1,node_id2)):
-                counter_remainingnodes += 1
-                average_shortest_path = average_shortest_path + nx.shortest_path_length(G,node_id1,node_id2)
+        if(node_id1 in nx.nodes(G)):
+            min_dist = 1000000
+            genes_in_interactome = genes_in_interactome + 1
 
-    print ("number of nodes not skipped: ",counter_remainingnodes)
-    print ("number of all nodes: ",counter_allnodes)
-    average_shortest_path = average_shortest_path/float(counter_remainingnodes)
+            for j in range(0,number_of_genes):
+                
+                node_id2 = int(disease_list[disease_id][j+4])
+                if(node_id1 != node_id2):
+                    
+                    if (node_id2 in nx.nodes(G)):
+                    
+                        if(nx.has_path(G,node_id1,node_id2)):
+                            dist = nx.shortest_path_length(G,node_id1,node_id2)
+                        
+                            if(dist < min_dist):
+                                min_dist = dist
+                        
+            average_shortest_path = average_shortest_path + min_dist
+
+    average_shortest_path = average_shortest_path/float(genes_in_interactome)
     return average_shortest_path
 
 
@@ -50,6 +90,7 @@ def compute_module_diameter(G,disease_list,disease_id):
 f1 = open("DataS1_interactome_clean.tsv", "rb")
 G  = lets_create_network_from_file(f1)
 f1.close()
+
 
 
 # assign each node its associated diseases
@@ -69,9 +110,16 @@ for line in f2.readlines()[1:]:
 
 nod  = len(disease_list)
 avr  = np.zeros((nod,1))
+dist = np.zeros((nod,1))
 
 for i in range(0,nod):
-    avr[i] = compute_module_diameter(G,disease_list,i)
-    print('#########################################')
-    print("lets get the run down on disease:",disease_list[i][0], avr[i])
-    print(' ')
+
+    if(disease_list[i][0] == "multiple sclerosis"):
+        print('#########################################')
+        print("lets get the run down on disease:",disease_list[i][0])
+        
+        avr[i] = compute_shortest_path_length(G,disease_list,i)
+        dist[i] = compute_module_diameter(G,disease_list,i)
+        print('shorest path length:',avr[i])
+        print('module size:',dist[i])
+        print(' ')
