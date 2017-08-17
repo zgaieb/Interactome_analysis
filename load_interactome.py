@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 
-
+print("blahblah")
 
 ### this functions takes in file path (list of edges, notes) and creates a networkX graph
 ### returns graph G
