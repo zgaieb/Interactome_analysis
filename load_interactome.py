@@ -20,12 +20,13 @@ def compute_module_diameter(G,disease_list,disease_id):
     average_shortest_path = 0.0
     counter = 0
     for i in range(0,number_of_genes -1):
-
         node_id1 = int(disease_list[disease_id][i+4])
-        print(node_id1)
+        print (node_id1)
         for j in range(i+1,number_of_genes):
             node_id2 = int(disease_list[disease_id][j+4])
-
+            if (node_id1 not in nx.nodes(G)) | (node_id2 not in nx.nodes(G)):
+                print (node_id1,node_id2)
+                next
             print(i,j,node_id1,node_id2)
             counter += 1
             average_shortest_path = average_shortest_path + nx.shortest_path_length(G,node_id1,node_id2)
