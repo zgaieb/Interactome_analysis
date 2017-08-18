@@ -13,6 +13,41 @@ def debug():
     sys.exit("debug mode")
 
 
+##
+##function to read TAB-SEPERATED files and if wanted convert to numpy array
+def read_file(file,convert_to_nparray = False):
+    f3 = open(file,encoding = 'utf-8',errors = 'replace')
+    array = []
+    for line in f3.readlines()[1:]:
+        array_tmp = line.split('\t')
+        array_tmp[-1] = array_tmp[-1].strip()
+        array.append(array_tmp)
+    #
+    f3.close()
+    if convert_to_nparray==True:
+        import numpy as np
+        array = np.asarray(array)
+    return array
+
+##
+
+##This function is to map any new data to existing data; to_map is the data you wanna add new columns to
+## the map is the new data that has a common column with to_map; col_tomap and col_tomapto is the common column between both matrices
+## the to_map and the_map, respectively.
+def mapping(to_map,the_map,col_tomap = 3,col_tomapto = 0):
+    col_tomap = 3
+    col_tomapto = 0
+    for i in range(len(to_map)):
+        ID_tomapto = to_map[i][col_tomap].strip()
+        to_map[i].append('MISSING')
+        #print(ID_tomapto)
+        for j in range(len(the_map)):
+            if (the_map[j][col_tomapto]==ID_tomapto):
+                to_map[i][-1]=the_map[j][col_tomapto+1].strip()
+    return to_map
+
+
+
 ### this functions takes in file path (list of edges, notes) and creates a networkX graph
 ### returns graph G
 def lets_create_network_from_file(f1):
@@ -127,8 +162,25 @@ for i in range(0,nod):
 
 ########### Adding node attributes to each gene
 # Reading Drug Bank drug targets; format: DrugBank ID, Name, Type, Uniprot ID, Uniprot Name
-drugBank_file = np.genfromtxt("DrugBank_Uniprot_Data/drugbank_all_target_uniprot_links.txt",delimiter="\t",dtype=None)
 
+## Mapping gene_IDs to DrugBank Uniprot IDs
+drugBank_file = "DrugBank_Uniprot_Data/drugbank_all_target_uniprot_links.txt"
+drugbankinfo = read_file(drugBank_file)
+
+
+mapping_file = "DrugBank_Uniprot_Data/DrugBank_uniprot_Gene_Mapping.txt"
+the_map = read_file(mapping_file)
+
+drugbankinfo = mapping(to_map=drugbankinfo,the_map=the_map,col_tomap = 3,col_tomapto = 0)
+
+
+f2 = open("DrugBank_Uniprot_Data/drugbank_all_target_uniprot_GeneID.txt","w")
+f2.write( '\t'.join(['DrugBankID','Name','Type','UniprotID', 'UniprotName','GeneID','\n']))
+for i in range(len(drugbankinfo)):
+    f2.write( '\t'.join([str(x) for x in drugbankinfo[i]]))
+    f2.write('\n')
+
+f2.close()
 
 
 #
