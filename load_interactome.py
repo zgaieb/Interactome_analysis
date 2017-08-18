@@ -37,6 +37,7 @@ def read_file(file,convert_to_nparray = False):
 def mapping(to_map,the_map,col_tomap = 3,col_tomapto = 0):
     col_tomap = 3
     col_tomapto = 0
+    print("There might be some missing values in the matrix, check output file")
     for i in range(len(to_map)):
         ID_tomapto = to_map[i][col_tomap].strip()
         to_map[i].append('MISSING')
@@ -182,5 +183,19 @@ for i in range(len(drugbankinfo)):
 
 f2.close()
 
+## Setting attributes to each node
+##Removing geneIDs that do not existing in the network and those with MISSING entries
+drugbankinfo_trimmed = []
+for i in range(len(drugbankinfo)):
+    if (drugbankinfo[i][5]=='MISSING'):
+        next
+    elif (int(drugbankinfo[i][5]) in nx.nodes(G)):
+        drugbankinfo_trimmed.append(drugbankinfo[i])
+
+
+## Creating a dictionnary of gene_IDs and Drugs/proteins
+drugbankinfo_transpose = list(map(list, zip(*drugbankinfo_trimmed)))
+geneIDs_and_drugs = dict(zip(list(map(int, drugbankinfo_transpose[5])), drugbankinfo_transpose[1]))
+nx.set_node_attributes(G, 'drugs', geneIDs_and_drugs)
 
 #
