@@ -37,7 +37,7 @@ def read_file(file,convert_to_nparray = False):
 def mapping(to_map,the_map,col_tomap = 3,col_tomapto = 0):
     col_tomap = 3
     col_tomapto = 0
-    print("There might be some missing values in the matrix, check output file")
+    print("There might be some missing values in the matrix, check output variable \'to map\'")
     for i in range(len(to_map)):
         ID_tomapto = to_map[i][col_tomap].strip()
         to_map[i].append('MISSING')
@@ -61,13 +61,13 @@ def lets_create_network_from_file(f1):
 ### loops over all nodes in disease list[id] and computers shortest path between pairs of nodes
 ### returns module average shortest path between all node pairs
 ### module size correspons to number of nodes in largest connected subgraph
-def compute_module_diameter(G,disease_list,disease_id):
+def compute_module_diameter(G,gene_list):
 
-    number_of_genes = int(disease_list[disease_id][1])
+    number_of_genes = int(gene_list[1])
 
     list_of_nodes = []
     for i in range(0,number_of_genes):
-        node_id1 = int(disease_list[disease_id][i+4])
+        node_id1 = int(gene_list[i+4])
 
         if (node_id1  in nx.nodes(G)):
             list_of_nodes.append(node_id1)
@@ -83,13 +83,13 @@ def compute_module_diameter(G,disease_list,disease_id):
 ### this function takes in connected graph G, disease list, and disease id
 ### loops over all nodes in disease list[id] and computers shortest path between pairs of nodes
 ### returns module average shortest path between all node pairs
-def compute_shortest_path_length(G,disease_list,disease_id):
-    number_of_genes = int(disease_list[disease_id][1])
+def compute_shortest_path_length(G,gene_list):
+    number_of_genes = int(gene_list[1])
     average_shortest_path = 0.0
     genes_in_interactome = 0
 
     for i in range(0,number_of_genes):
-        node_id1 = int(disease_list[disease_id][i+4])
+        node_id1 = int(gene_list[i+4])
 
 
         if(node_id1 in nx.nodes(G)):
@@ -98,7 +98,7 @@ def compute_shortest_path_length(G,disease_list,disease_id):
 
             for j in range(0,number_of_genes):
 
-                node_id2 = int(disease_list[disease_id][j+4])
+                node_id2 = int(gene_list[j+4])
                 if(node_id1 != node_id2):
 
                     if (node_id2 in nx.nodes(G)):
@@ -115,6 +115,20 @@ def compute_shortest_path_length(G,disease_list,disease_id):
     return average_shortest_path
 
 
+## This function will take geneID matrix and turn it into a dictionnary to be able to give nodes attributes
+def dic_node_attributes(geneID_info_matrix, geneID_col, attribute_col):
+    ## Removing geneIDs that do not existing in the network and those with MISSING entries
+    geneID_info_matrix_trimmed = []
+    for i in range(len(geneID_info_matrix)):
+        if (geneID_info_matrix[i][geneID_col]=='MISSING'):
+            next
+        elif (int(geneID_info_matrix[i][geneID_col]) in nx.nodes(G)):
+            geneID_info_matrix_trimmed.append(geneID_info_matrix[i])
+    ## Creating a dictionnary of gene_IDs and attributes
+    geneID_info_matrix_transpose = list(map(list, zip(*geneID_info_matrix_trimmed)))
+    geneIDs_and_attribute_dic = dict(zip(list(map(int, geneID_info_matrix_transpose[geneID_col])), geneID_info_matrix_transpose[attribute_col]))
+    return geneIDs_and_attribute_dic
+
 
 
 ##########################################################################################################################
@@ -123,7 +137,7 @@ def compute_shortest_path_length(G,disease_list,disease_id):
 
 
 # lets define our file path
-f1 = open("DataS1_interactome_clean.tsv", "rb")
+f1 = open("DataS1_interactome_clean_noMethod.tsv", "rb")
 G  = lets_create_network_from_file(f1)
 f1.close()
 
@@ -144,24 +158,33 @@ for line in f2.readlines()[1:]:
     #
     disease_list.append(disease_list_tmp)
 
-nod  = len(disease_list)
+nod = len(disease_list)
 avr  = np.zeros((nod,1))
 dist = np.zeros((nod,1))
 
-for i in range(0,nod):
+for i in range(0,len(disease_list)):
     if(disease_list[i][0] == "multiple sclerosis"):
         print('#########################################')
         print("lets get the run down on disease:",disease_list[i][0])
 
-        avr[i] = compute_shortest_path_length(G,disease_list,i)
-        dist[i] = compute_module_diameter(G,disease_list,i)
+        avr[i] = compute_shortest_path_length(G,disease_list[i])
+        dist[i] = compute_module_diameter(G,disease_list[i])
         print('shorest path length:',avr[i])
         print('module size:',dist[i])
         print(' ')
 
+## Make the disease_list into an array of geneIDs and diseases
+disease_gene_array = []
+for i in range(0,len(disease_list)):
+    disease_gene_array.extend([[x,disease_list[i][0]] for x in disease_list[i][4:]])
+
+geneIDs_and_disease = dic_node_attributes(geneID_info_matrix=disease_gene_array, geneID_col=0, attribute_col=1)
+nx.set_node_attributes(G, 'disease', geneIDs_and_disease)
 
 
-########### Adding node attributes to each gene
+
+
+########### Adding node attributes to each gene: protein names and Drug names
 # Reading Drug Bank drug targets; format: DrugBank ID, Name, Type, Uniprot ID, Uniprot Name
 
 ## Mapping gene_IDs to DrugBank Uniprot IDs
@@ -174,7 +197,7 @@ the_map = read_file(mapping_file)
 
 drugbankinfo = mapping(to_map=drugbankinfo,the_map=the_map,col_tomap = 3,col_tomapto = 0)
 
-
+# Writing mapped file to drugbank info to gene IDs
 f2 = open("DrugBank_Uniprot_Data/drugbank_all_target_uniprot_GeneID.txt","w")
 f2.write( '\t'.join(['DrugBankID','Name','Type','UniprotID', 'UniprotName','GeneID','\n']))
 for i in range(len(drugbankinfo)):
@@ -184,18 +207,47 @@ for i in range(len(drugbankinfo)):
 f2.close()
 
 ## Setting attributes to each node
-##Removing geneIDs that do not existing in the network and those with MISSING entries
-drugbankinfo_trimmed = []
-for i in range(len(drugbankinfo)):
-    if (drugbankinfo[i][5]=='MISSING'):
-        next
-    elif (int(drugbankinfo[i][5]) in nx.nodes(G)):
-        drugbankinfo_trimmed.append(drugbankinfo[i])
-
-
-## Creating a dictionnary of gene_IDs and Drugs/proteins
-drugbankinfo_transpose = list(map(list, zip(*drugbankinfo_trimmed)))
-geneIDs_and_drugs = dict(zip(list(map(int, drugbankinfo_transpose[5])), drugbankinfo_transpose[1]))
+geneIDs_and_drugs = dic_node_attributes(geneID_info_matrix=drugbankinfo, geneID_col=5, attribute_col=1)
+geneIDs_and_proteinIDs = dic_node_attributes(geneID_info_matrix=drugbankinfo, geneID_col=5, attribute_col=4)
 nx.set_node_attributes(G, 'drugs', geneIDs_and_drugs)
+nx.set_node_attributes(G, 'proteinIDs', geneIDs_and_proteinIDs)
 
+#
+########### Adding node attributes to each gene: pathway name
+########### Parsing XML files
+#
+import xml.etree.ElementTree as ET
+tree = ET.parse('KEGG_Complement_Pathways/hsa04610.xml')
+root = tree.getroot()
+pathway_genes = []
+for component in root:
+    if (component.attrib['type']=='gene'):
+        gene_nbres = [x.split("hsa:")[1] for x in component.attrib['name'].split(" ")]
+        pathway_genes.extend(gene_nbres)
+
+pathway_title = root.attrib['title']
+print(pathway_title, "genes are: ", pathway_genes)
+
+gene_pathway_map = [[x,pathway_title] for x in pathway_genes]
+
+## Setting pathway attributes to each node
+geneIDs_and_pathway = dic_node_attributes(geneID_info_matrix=gene_pathway_map, geneID_col=0, attribute_col=1)
+nx.set_node_attributes(G, 'pathway', geneIDs_and_pathway)
+
+'''
+print('#########################################')
+print("lets get the run down on the:",pathway_title)
+
+pathway_list = [pathway_title,str(len(gene_pathway_map_transpose[0])),str(len(gene_pathway_map_transpose[0])),str(len(gene_pathway_map_transpose[0]))]
+pathway_list.extend(gene_pathway_map_transpose[0])
+avr_pathway = compute_shortest_path_length(G,pathway_list)
+dist_pathway = compute_module_diameter(G,pathway_list)
+print('shorest path length:',avr_pathway)
+print('module size:',dist_pathway)
+print(' ')
+'''
+node_relabel = dict(zip(G.nodes(),list(map(str, G.nodes()))))
+H=nx.relabel_nodes(G,node_relabel)
+nx.write_gml(H,"test.gml")
+#
 #
